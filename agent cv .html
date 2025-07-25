@@ -1,0 +1,2274 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI CV Analyzer - Agent CV</title>
+    
+    <!-- Import tất cả các module chấm điểm -->
+    <script src="scoring/keywordMatching.js"></script>
+    <script src="scoring/skillScorer.js"></script>
+    <script src="scoring/experienceScorer.js"></script>
+    <script src="scoring/formattingScorer.js"></script>
+    <script src="scoring/educationScorer.js"></script>
+    <script src="scoring/cvScorer.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 50%, #2d2d2d 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(45deg, #00d4aa, #00b4d8, #0077b6);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: #b0b0b0;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+
+        .upload-section, .analysis-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .upload-section:hover, .analysis-section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 212, 170, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #00d4aa;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .upload-area {
+            border: 2px dashed #00d4aa;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(0, 212, 170, 0.05);
+        }
+
+        .upload-area:hover {
+            border-color: #00b4d8;
+            background: rgba(0, 180, 216, 0.1);
+        }
+
+        .upload-area.dragover {
+            border-color: #0077b6;
+            background: rgba(0, 119, 182, 0.15);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #00d4aa;
+            margin-bottom: 15px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-text {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .file-types {
+            font-size: 0.9rem;
+            color: #b0b0b0;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #00d4aa, #00b4d8);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 212, 170, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .feature-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .feature-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(0, 212, 170, 0.3);
+            color: #ffffff;
+            padding: 15px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .feature-btn:hover, .feature-btn.active {
+            background: linear-gradient(45deg, #00d4aa, #00b4d8);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 212, 170, 0.2);
+        }
+
+        .analysis-result {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid #00d4aa;
+            /* Removed height restriction for full display */
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left: 4px solid #00d4aa;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4aa, #00b4d8);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .score-card {
+            background: linear-gradient(45deg, rgba(0, 212, 170, 0.1), rgba(0, 180, 216, 0.1));
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            text-align: center;
+            border: 1px solid rgba(0, 212, 170, 0.3);
+        }
+
+        .score-value {
+            font-size: 3rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #00d4aa, #00b4d8);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Styles cho kết quả chấm điểm chi tiết */
+        .detailed-score-container {
+            display: grid;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .score-overview {
+            background: linear-gradient(135deg, rgba(0, 212, 170, 0.1), rgba(0, 180, 216, 0.1));
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid rgba(0, 212, 170, 0.3);
+            text-align: center;
+        }
+
+        .final-score {
+            font-size: 4rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #00d4aa, #00b4d8);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .score-grade {
+            font-size: 1.5rem;
+            color: #00d4aa;
+            margin-bottom: 15px;
+        }
+
+        .score-description {
+            color: #b8b8b8;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .category-scores {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .category-score-item {
+            background: rgba(26, 26, 26, 0.8);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .category-score-item:hover {
+            border-color: rgba(0, 212, 170, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .category-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #00d4aa;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .category-score {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .category-level {
+            color: #b8b8b8;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .score-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .score-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4aa, #00b4d8);
+            border-radius: 4px;
+            transition: width 0.8s ease;
+        }
+
+        .recommendations-section {
+            background: rgba(26, 26, 26, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .recommendations-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #00d4aa;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .recommendation-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .recommendation-tab {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .recommendation-tab.active {
+            background: linear-gradient(45deg, #00d4aa, #00b4d8);
+            border-color: transparent;
+            color: #000;
+        }
+
+        .recommendation-content {
+            display: none;
+        }
+
+        .recommendation-content.active {
+            display: block;
+        }
+
+        .recommendation-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #00d4aa;
+        }
+
+        .recommendation-category {
+            font-weight: 600;
+            color: #00b4d8;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .recommendation-text {
+            color: #e0e0e0;
+            line-height: 1.5;
+        }
+
+        .strengths-weaknesses {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .strength-item, .weakness-item {
+            background: rgba(26, 26, 26, 0.8);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .strength-item {
+            border-left: 4px solid #00d4aa;
+        }
+
+        .weakness-item {
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #00d4aa;
+        }
+
+        .weakness-section .section-title {
+            color: #ff6b6b;
+        }
+
+        .basic-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .info-label {
+            color: #b8b8b8;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 768px) {
+            .strengths-weaknesses {
+                grid-template-columns: 1fr;
+            }
+            
+            .category-scores {
+                grid-template-columns: 1fr;
+            }
+            
+            .final-score {
+                font-size: 3rem;
+            }
+        }
+
+        .score-label {
+            font-size: 1.1rem;
+            color: #b0b0b0;
+            margin-top: 10px;
+        }
+
+        .strengths-weaknesses {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .strength, .weakness {
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid;
+        }
+
+        .strength {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: #22c55e;
+        }
+
+        .weakness {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border: 2px solid rgba(0, 212, 170, 0.3);
+        }
+
+        .file-info {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .file-icon {
+            font-size: 2rem;
+            color: #00d4aa;
+        }
+
+        .file-details {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .file-size {
+            color: #b0b0b0;
+            font-size: 0.9rem;
+        }
+
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            background: radial-gradient(circle, rgba(0, 212, 170, 0.8), transparent);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            color: #fca5a5;
+        }
+
+        .success-message {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid #22c55e;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            color: #86efac;
+        }
+
+        .progress-bar {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            height: 8px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(45deg, #00d4aa, #00b4d8);
+            height: 100%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        /* CV Layout Styles */
+        .cv-container {
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            font-family: 'Times New Roman', serif;
+            line-height: 1.6;
+        }
+
+        .cv-header {
+            text-align: center;
+            border-bottom: 3px solid #00d4aa;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .cv-name {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .cv-title {
+            font-size: 1.2rem;
+            color: #00d4aa;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .cv-contact {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            color: #555;
+        }
+
+        .cv-contact-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .cv-section {
+            margin-bottom: 30px;
+        }
+
+        .cv-section-title {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #2c3e50;
+            border-bottom: 2px solid #00d4aa;
+            padding-bottom: 8px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .cv-item {
+            margin-bottom: 20px;
+            padding-left: 20px;
+            border-left: 3px solid #e3f2fd;
+        }
+
+        .cv-item-header {
+            display: flex;
+            justify-content: between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .cv-item-title {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 1.1rem;
+        }
+
+        .cv-item-company {
+            color: #00d4aa;
+            font-weight: 600;
+            margin-top: 3px;
+        }
+
+        .cv-item-date {
+            color: #666;
+            font-style: italic;
+            font-size: 0.9rem;
+            margin-left: auto;
+        }
+
+        .cv-item-description {
+            color: #555;
+            margin-top: 8px;
+        }
+
+        .cv-skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .cv-skill-item {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border-left: 4px solid #00d4aa;
+            font-weight: 500;
+        }
+
+        .cv-languages {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .cv-language-item {
+            background: #e3f2fd;
+            padding: 8px 15px;
+            border-radius: 20px;
+            color: #1976d2;
+            font-weight: 500;
+        }
+
+        .analysis-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .analysis-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .analysis-card h4 {
+            color: #00d4aa;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .score-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .score-item {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid rgba(0, 212, 170, 0.3);
+        }
+
+        .score-item-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #00d4aa;
+        }
+
+        .score-item-label {
+            font-size: 0.9rem;
+            color: #b0b0b0;
+            margin-top: 5px;
+        }
+
+        .improvements-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .improvements-list li {
+            background: rgba(255, 255, 255, 0.05);
+            margin: 10px 0;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border-left: 4px solid #ffd700;
+            position: relative;
+        }
+
+        .improvements-list li:before {
+            content: "";
+            margin-right: 0px;
+        }
+
+        .strengths-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .strengths-list li {
+            background: rgba(34, 197, 94, 0.1);
+            margin: 10px 0;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border-left: 4px solid #22c55e;
+            color: #86efac;
+        }
+
+        .strengths-list li:before {
+            content: "";
+            margin-right: 0px;
+        }
+
+        .weaknesses-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .weaknesses-list li {
+            background: rgba(239, 68, 68, 0.1);
+            margin: 10px 0;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border-left: 4px solid #ef4444;
+            color: #fca5a5;
+        }
+
+        .weaknesses-list li:before {
+            content: "";
+            margin-right: 0px;
+        }
+
+        .errors-section {
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #ef4444;
+        }
+
+        .error-category {
+            margin-bottom: 20px;
+        }
+
+        .error-category h4 {
+            color: #ef4444;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .error-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 12px;
+            border-radius: 8px;
+            margin: 8px 0;
+            border-left: 3px solid #ef4444;
+        }
+
+        .agent-cv-preview {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            color: #333;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .before-after {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .before-section, .after-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .before-section h4 {
+            color: #ef4444;
+            margin-bottom: 15px;
+        }
+
+        .after-section h4 {
+            color: #22c55e;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .cv-contact {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            .before-after {
+                grid-template-columns: 1fr;
+            }
+            
+            .analysis-grid, .score-breakdown {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI CV Analyzer</h1>
+            <p>Phân tích CV thông minh với công nghệ AI tiên tiến</p>
+        </div>
+
+        <div class="main-content">
+            <div class="upload-section">
+                <h2 class="section-title">
+                    📄 Tải lên CV của bạn
+                </h2>
+                
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Kéo thả file hoặc click để chọn</div>
+                    <div class="file-types">Hỗ trợ: JPG, PNG, PDF, DOCX</div>
+                </div>
+                
+                <input type="file" id="fileInput" class="file-input" 
+                       accept="image/*,.pdf,.doc,.docx" multiple>
+                
+                <div class="feature-buttons">
+                    <button class="feature-btn active" data-mode="score">
+                        📊 Chấm điểm CV
+                    </button>
+                    <button class="feature-btn" data-mode="agent">
+                        🤖 Agent CV
+                    </button>
+                    <button class="feature-btn" data-mode="errors">
+                        🔍 Tìm lỗi CV
+                    </button>
+                    <button class="feature-btn" data-mode="analyze">
+                        📈 Phân tích toàn diện
+                    </button>
+                </div>
+
+                <div id="filePreview"></div>
+                
+                <button class="btn" id="analyzeBtn" disabled>
+                    🚀 Bắt đầu phân tích
+                </button>
+            </div>
+
+            <div class="analysis-section">
+                <h2 class="section-title">
+                    🎯 Kết quả phân tích
+                </h2>
+                
+                <div id="analysisResult">
+                    <div style="text-align: center; padding: 40px; color: #666;">
+                        <div style="font-size: 4rem; margin-bottom: 20px;">📋</div>
+                        <h3 style="color: #00d4aa; margin-bottom: 15px;">Chào mừng đến với AI CV Analyzer</h3>
+                        <p style="margin-bottom: 20px;">Chọn file CV (JPG, PNG, PDF, DOCX) để bắt đầu phân tích thông minh</p>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 25px; color: #999;">
+                            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+                                <div style="font-size: 1.5rem; margin-bottom: 8px;">📊</div>
+                                <strong>Chấm điểm CV</strong><br>
+                                <small>Đánh giá điểm số 0-100</small>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+                                <div style="font-size: 1.5rem; margin-bottom: 8px;">🤖</div>
+                                <strong>Agent CV</strong><br>
+                                <small>Tạo CV tối ưu</small>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+                                <div style="font-size: 1.5rem; margin-bottom: 8px;">🔍</div>
+                                <strong>Tìm lỗi</strong><br>
+                                <small>Phát hiện & sửa lỗi</small>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+                                <div style="font-size: 1.5rem; margin-bottom: 8px;">📈</div>
+                                <strong>Phân tích toàn diện</strong><br>
+                                <small>Đánh giá chi tiết</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Gemini API Configuration
+        const GEMINI_API_KEY = 'AIzaSyAyE1md6w95H8gi9nSbYJsk6uqKVvxMPb0';
+        const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+
+        // Global variables
+        let selectedFiles = [];
+        let currentMode = 'score';
+        let isAnalyzing = false;
+
+        // DOM Elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const analysisResult = document.getElementById('analysisResult');
+        const filePreview = document.getElementById('filePreview');
+        const featureButtons = document.querySelectorAll('.feature-btn');
+
+        // Initialize particles background
+        function createParticles() {
+            const particles = document.getElementById('particles');
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.width = Math.random() * 4 + 2 + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                particles.appendChild(particle);
+            }
+        }
+
+        // File upload handlers
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+        uploadArea.addEventListener('drop', handleDrop);
+        fileInput.addEventListener('change', handleFileSelect);
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files);
+            processFiles(files);
+        }
+
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            processFiles(files);
+        }
+
+        function processFiles(files) {
+            selectedFiles = files.filter(file => {
+                const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf', 
+                                   'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+                return validTypes.includes(file.type) && file.size <= 10 * 1024 * 1024; // 10MB limit
+            });
+
+            if (selectedFiles.length === 0) {
+                showError('Vui lòng chọn file hợp lệ (JPG, PNG, PDF, DOCX) và nhỏ hơn 10MB');
+                return;
+            }
+
+            displayFilePreview();
+            analyzeBtn.disabled = false;
+        }
+
+        function displayFilePreview() {
+            filePreview.innerHTML = '';
+            
+            selectedFiles.forEach((file, index) => {
+                const fileInfo = document.createElement('div');
+                fileInfo.className = 'file-info';
+                
+                const fileIcon = getFileIcon(file.type);
+                const fileSize = formatFileSize(file.size);
+                
+                fileInfo.innerHTML = `
+                    <div class="file-icon">${fileIcon}</div>
+                    <div class="file-details">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-size">${fileSize}</div>
+                    </div>
+                `;
+
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'preview-image';
+                        fileInfo.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                }
+
+                filePreview.appendChild(fileInfo);
+            });
+        }
+
+        function getFileIcon(fileType) {
+            if (fileType.startsWith('image/')) return '🖼️';
+            if (fileType === 'application/pdf') return '📄';
+            if (fileType.includes('word')) return '📝';
+            return '📄';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Feature mode selection
+        featureButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                featureButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentMode = btn.dataset.mode;
+            });
+        });
+
+        // Analysis function
+        analyzeBtn.addEventListener('click', analyzeCV);
+
+        async function analyzeCV() {
+            if (isAnalyzing || selectedFiles.length === 0) return;
+
+            isAnalyzing = true;
+            analyzeBtn.disabled = true;
+            showLoading();
+
+            try {
+                if (currentMode === 'score') {
+                    // Sử dụng hệ thống chấm điểm mới
+                    await analyzeWithAdvancedScoring();
+                } else {
+                    // Sử dụng Gemini AI cho các chức năng khác
+                    await analyzeWithGeminiText();
+                }
+            } catch (error) {
+                showError('Lỗi khi phân tích CV: ' + error.message);
+            } finally {
+                isAnalyzing = false;
+                analyzeBtn.disabled = false;
+            }
+        }
+
+        async function analyzeWithAdvancedScoring() {
+            const cvScorer = new CVScorer();
+            let results = [];
+
+            for (const file of selectedFiles) {
+                try {
+                    let cvText = '';
+                    
+                    if (file.type.startsWith('image/')) {
+                        // Extract text from image using Gemini
+                        const base64 = await fileToBase64(file);
+                        const extractPrompt = 'Hãy trích xuất toàn bộ nội dung text từ hình ảnh CV này. Chỉ trả về text, không thêm bình luận.';
+                        cvText = await analyzeWithGeminiAPI(extractPrompt, base64, file.type);
+                    } else {
+                        // Extract text from PDF/DOCX
+                        cvText = await extractTextFromFile(file);
+                    }
+
+                    // Get job requirements from user input (if available)
+                    const jobRequirements = getJobRequirements();
+                    
+                    // Score CV using advanced system
+                    const scoringResult = await cvScorer.scoreCV(cvText, jobRequirements);
+                    
+                    results.push({
+                        fileName: file.name,
+                        scoringResult: scoringResult,
+                        originalText: cvText
+                    });
+                    
+                } catch (error) {
+                    console.error(`Error analyzing ${file.name}:`, error);
+                    results.push({
+                        fileName: file.name,
+                        error: error.message
+                    });
+                }
+            }
+
+            displayScoringResults(results);
+        }
+
+        async function analyzeWithGeminiText() {
+            let analysisPrompt = getAnalysisPrompt();
+            let results = [];
+
+            for (const file of selectedFiles) {
+                if (file.type.startsWith('image/')) {
+                    const base64 = await fileToBase64(file);
+                    const result = await analyzeWithGeminiAPI(analysisPrompt, base64, file.type);
+                    results.push(result);
+                } else {
+                    // For PDF/DOCX files, we'll use text extraction (simplified approach)
+                    const textContent = await extractTextFromFile(file);
+                    const result = await analyzeTextWithGemini(analysisPrompt, textContent);
+                    results.push(result);
+                }
+            }
+
+            displayResults(results);
+        }
+
+        function getJobRequirements() {
+            // Return default requirements since form is removed
+            return {
+                jobTitle: '',
+                jobDescription: '',
+                requiredSkills: [],
+                minExperience: 0,
+                minEducation: '',
+                weights: {
+                    keyword: 0.25,
+                    skill: 0.25,
+                    experience: 0.25,
+                    education: 0.15,
+                    formatting: 0.10
+                }
+            };
+        }
+
+        function displayScoringResults(results) {
+            hideLoading();
+            const analysisResult = document.getElementById('analysisResult');
+            analysisResult.innerHTML = '';
+
+            results.forEach((result, index) => {
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'analysis-result';
+                
+                if (result.error) {
+                    resultDiv.innerHTML = `
+                        <h3 style="color: #ff6b6b; margin-bottom: 15px;">❌ Lỗi phân tích: ${result.fileName}</h3>
+                        <p style="color: #e0e0e0;">${result.error}</p>
+                    `;
+                } else {
+                    resultDiv.innerHTML = formatAdvancedScoringResult(result.scoringResult, result.fileName);
+                }
+
+                if (results.length > 1) {
+                    const fileTitle = document.createElement('h2');
+                    fileTitle.textContent = `📄 ${result.fileName}`;
+                    fileTitle.style.color = '#00d4aa';
+                    resultDiv.insertBefore(fileTitle, resultDiv.firstChild);
+                }
+                
+                analysisResult.appendChild(resultDiv);
+            });
+        }
+
+        function getAnalysisPrompt() {
+            const prompts = {
+                score: `Bạn là chuyên gia HR chuyên nghiệp. Hãy phân tích CV này theo định dạng sau:
+
+1. ĐIỂM SỐ TỔNG THỂ (0-100 điểm)
+
+2. ĐIỂM SỐ CHI TIẾT:
+   a. Thông tin cá nhân (0-20 điểm)
+   b. Kinh nghiệm làm việc (0-30 điểm)  
+   c. Kỹ năng chuyên môn (0-25 điểm)
+   d. Học vấn và bằng cấp (0-15 điểm)
+   e. Định dạng và trình bày (0-10 điểm)
+
+3. ĐIỂM MẠNH NỔI BẬT:
+   a. [Điểm mạnh 1]
+   b. [Điểm mạnh 2]
+   c. [Điểm mạnh 3]
+   d. [Điểm mạnh 4] (nếu có)
+   e. [Điểm mạnh 5] (nếu có)
+
+4. ĐIỂM CẦN CẢI THIỆN:
+   a. [Điểm yếu 1]
+   b. [Điểm yếu 2]
+   c. [Điểm yếu 3]
+   d. [Điểm yếu 4] (nếu có)
+   e. [Điểm yếu 5] (nếu có)
+
+5. ĐỀ XUẤT CẢI THIỆN:
+   a. Cải thiện nội dung
+   b. Tối ưu hóa từ khóa
+   c. Nâng cao trình bày
+   d. Bổ sung thông tin
+   e. Điều chỉnh cấu trúc
+                
+                Trả lời bằng tiếng Việt, tuân thủ chính xác định dạng trên.`,
+                
+                agent: `Bạn là AI Agent CV chuyên nghiệp. Hãy tạo CV được cải thiện theo cấu trúc sau:
+
+1. THÔNG TIN CÁ NHÂN
+   a. Họ tên: [Giữ nguyên]
+   b. Vị trí ứng tuyển: [Cải thiện]
+   c. Thông tin liên hệ: [Giữ nguyên]
+   d. Mục tiêu nghề nghiệp: [Viết lại chuyên nghiệp]
+
+2. TÓM TẮT CHUYÊN NGHIỆP
+   a. Điểm mạnh cốt lõi
+   b. Kinh nghiệm nổi bật  
+   c. Thành tựu đạt được
+
+3. KINH NGHIỆM LÀM VIỆC
+   [Với mỗi công việc]
+   a. Tên công ty - Vị trí (Thời gian)
+   b. Mô tả công việc (cải thiện)
+   c. Thành tích đạt được
+   d. Kỹ năng sử dụng
+
+4. KỸ NĂNG CHUYÊN MÔN
+   a. Kỹ năng kỹ thuật
+   b. Kỹ năng mềm
+   c. Ngôn ngữ
+   d. Chứng chỉ
+
+5. HỌC VẤN
+   a. Bằng cấp chính
+   b. Khóa học bổ sung
+   c. Chứng chỉ nghề nghiệp
+                
+                Trả lời bằng tiếng Việt, tạo CV hoàn chỉnh theo định dạng trên.`,
+                
+                errors: `Bạn là chuyên gia kiểm duyệt CV. Hãy tìm lỗi theo danh mục sau:
+
+1. LỖI CHÍNH TẢ VÀ NGỮ PHÁP:
+   a. [Lỗi 1 và cách sửa]
+   b. [Lỗi 2 và cách sửa]
+   c. [Lỗi 3 và cách sửa]
+
+2. LỖI ĐỊNH DẠNG VÀ BỐ CỤC:
+   a. [Lỗi định dạng 1]
+   b. [Lỗi định dạng 2] 
+   c. [Lỗi định dạng 3]
+
+3. THÔNG TIN THIẾU SÓT:
+   a. [Thông tin còn thiếu 1]
+   b. [Thông tin còn thiếu 2]
+   c. [Thông tin còn thiếu 3]
+
+4. LỖI TRÌNH BÀY CHUYÊN NGHIỆP:
+   a. [Lỗi trình bày 1]
+   b. [Lỗi trình bày 2]
+   c. [Lỗi trình bày 3]
+
+5. CÁCH SỬA CHỮ CHO TỪNG LỖI:
+   a. Hướng dẫn sửa lỗi 1
+   b. Hướng dẫn sửa lỗi 2
+   c. Hướng dẫn sửa lỗi 3
+   d. Hướng dẫn sửa lỗi 4
+   e. Hướng dẫn sửa lỗi 5
+                
+                Trả lời bằng tiếng Việt, phân loại lỗi theo đúng định dạng.`,
+                
+                analyze: `Bạn là chuyên gia phân tích CV toàn diện. Phân tích theo cấu trúc sau:
+
+1. ĐÁNH GIÁ TỔNG QUAN:
+   a. Ấn tượng đầu tiên
+   b. Điểm nổi bật nhất
+   c. Mức độ chuyên nghiệp
+   d. Khả năng cạnh tranh
+
+2. PHÂN TÍCH TỪNG PHẦN:
+   a. Thông tin cá nhân (độ đầy đủ, chính xác)
+   b. Kinh nghiệm (mức độ phù hợp, thuyết phục)
+   c. Kỹ năng (đa dạng, chuyên sâu)
+   d. Học vấn (liên quan, uy tín)
+   e. Trình bày (bố cục, thiết kế)
+
+3. SO SÁNH VỚI TIÊU CHUẨN THỊ TRƯỜNG:
+   a. Mức độ cạnh tranh
+   b. Điểm vượt trội
+   c. Điểm còn yếu
+   d. Xếp hạng tổng thể
+
+4. DỰ ĐOÁN KHẢ NĂNG TUYỂN DỤNG:
+   a. Tỷ lệ thành công dự kiến
+   b. Loại công việc phù hợp
+   c. Mức lương có thể đạt được
+   d. Các rào cản có thể gặp
+
+5. LỘ TRÌNH CẢI THIỆN:
+   a. Cải thiện ngay (1-2 tuần)
+   b. Cải thiện ngắn hạn (1-3 tháng)
+   c. Cải thiện dài hạn (6-12 tháng)
+   d. Chiến lược nghề nghiệp
+
+6. GỢI Ý VỊ TRÍ CÔNG VIỆC PHÙ HỢP:
+   a. Vị trí hiện tại có thể ứng tuyển
+   b. Vị trí cần cải thiện thêm
+   c. Ngành nghề nên tập trung
+   d. Công ty mục tiêu
+                
+                Trả lời bằng tiếng Việt, phân tích sâu theo đúng cấu trúc trên.`
+            };
+            
+            return prompts[currentMode] || prompts.score;
+        }
+
+        async function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function analyzeWithGeminiAPI(prompt, base64Image, mimeType) {
+            const requestBody = {
+                contents: [{
+                    parts: [
+                        { text: prompt },
+                        {
+                            inline_data: {
+                                mime_type: mimeType,
+                                data: base64Image
+                            }
+                        }
+                    ]
+                }],
+                generationConfig: {
+                    temperature: 0.7,
+                    topK: 40,
+                    topP: 0.95,
+                    maxOutputTokens: 4096,
+                }
+            };
+
+            const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status} - ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+                return data.candidates[0].content.parts[0].text;
+            } else {
+                throw new Error('Không nhận được phản hồi hợp lệ từ API');
+            }
+        }
+
+        async function analyzeTextWithGemini(prompt, textContent) {
+            const requestBody = {
+                contents: [{
+                    parts: [{
+                        text: `${prompt}\n\nNội dung CV:\n${textContent}`
+                    }]
+                }],
+                generationConfig: {
+                    temperature: 0.7,
+                    topK: 40,
+                    topP: 0.95,
+                    maxOutputTokens: 4096,
+                }
+            };
+
+            const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status} - ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+                return data.candidates[0].content.parts[0].text;
+            } else {
+                throw new Error('Không nhận được phản hồi hợp lệ từ API');
+            }
+        }
+
+        async function extractTextFromFile(file) {
+            // Simplified text extraction - for production, you'd want to use proper libraries
+            return new Promise((resolve) => {
+                if (file.type === 'application/pdf') {
+                    resolve(`[PDF File: ${file.name}] - Vui lòng sử dụng file ảnh để có kết quả tốt nhất.`);
+                } else {
+                    resolve(`[Document File: ${file.name}] - Vui lòng sử dụng file ảnh để có kết quả tốt nhất.`);
+                }
+            });
+        }
+
+        function displayResults(results) {
+            analysisResult.innerHTML = '';
+            
+            results.forEach((result, index) => {
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'analysis-result';
+                
+                // Format the result based on current mode
+                const formattedResult = formatResult(result, currentMode);
+                resultDiv.innerHTML = formattedResult;
+                
+                if (results.length > 1) {
+                    const fileTitle = document.createElement('h3');
+                    fileTitle.textContent = `📄 Kết quả file ${index + 1}: ${selectedFiles[index].name}`;
+                    fileTitle.style.marginBottom = '15px';
+                    fileTitle.style.color = '#00d4aa';
+                    resultDiv.insertBefore(fileTitle, resultDiv.firstChild);
+                }
+                
+                analysisResult.appendChild(resultDiv);
+            });
+        }
+
+        function formatAdvancedScoringResult(scoringResult, fileName) {
+            const result = scoringResult;
+            
+            return `
+                <div class="detailed-score-container">
+                    <!-- Score Overview -->
+                    <div class="score-overview">
+                        <div class="final-score">${result.finalScore}</div>
+                        <div class="score-grade">Xếp hạng: ${result.grade}</div>
+                        <div class="score-description">
+                            <strong>${result.analysis.overall.level}</strong><br>
+                            ${result.analysis.overall.description}
+                        </div>
+                        <div style="margin-top: 15px; color: #b8b8b8;">
+                            📊 Khả năng cạnh tranh: ${result.analysis.competitiveness.marketPosition}<br>
+                            📈 Tốt hơn ${result.analysis.competitiveness.percentile}% CV khác
+                        </div>
+                    </div>
+
+                    <!-- Basic Info -->
+                    <div class="basic-info-section" style="background: rgba(26, 26, 26, 0.8); border-radius: 15px; padding: 25px; margin-top: 20px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                        <h3 style="color: #00d4aa; margin-bottom: 15px;">📋 Thông tin cơ bản</h3>
+                        <div class="basic-info-grid">
+                            <div class="info-item">
+                                <div class="info-label">Tên ứng viên</div>
+                                <div class="info-value">${result.basicInfo.name}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Email</div>
+                                <div class="info-value">${result.basicInfo.email || 'Không có'}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Số từ</div>
+                                <div class="info-value">${result.basicInfo.wordCount}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Các phần có mặt</div>
+                                <div class="info-value">${result.basicInfo.sections.join(', ') || 'Không xác định'}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Category Scores -->
+                    <div class="category-scores">
+                        ${formatCategoryScore('keyword', 'Từ khóa', '🔑', result.detailedScores.keyword)}
+                        ${formatCategoryScore('skill', 'Kỹ năng', '💡', result.detailedScores.skill)}
+                        ${formatCategoryScore('experience', 'Kinh nghiệm', '👔', result.detailedScores.experience)}
+                        ${formatCategoryScore('education', 'Học vấn', '🎓', result.detailedScores.education)}
+                        ${formatCategoryScore('formatting', 'Định dạng', '📝', result.detailedScores.formatting)}
+                    </div>
+
+                    <!-- Strengths and Weaknesses -->
+                    <div class="strengths-weaknesses">
+                        <div class="strength-item">
+                            <div class="section-title">✅ Điểm mạnh</div>
+                            ${result.analysis.strengths.length > 0 ? 
+                                result.analysis.strengths.map(strength => `
+                                    <div style="margin-bottom: 10px;">
+                                        <strong style="color: #00d4aa;">${getCategoryDisplayName(strength.category)}</strong> (${strength.score}/100)<br>
+                                        <span style="color: #e0e0e0;">${strength.description}</span>
+                                    </div>
+                                `).join('') : 
+                                '<div style="color: #b8b8b8;">Cần cải thiện nhiều hơn để có điểm mạnh nổi bật</div>'
+                            }
+                        </div>
+                        
+                        <div class="weakness-item">
+                            <div class="section-title">⚠️ Điểm cần cải thiện</div>
+                            ${result.analysis.weaknesses.length > 0 ? 
+                                result.analysis.weaknesses.map(weakness => `
+                                    <div style="margin-bottom: 10px;">
+                                        <strong style="color: #ff6b6b;">${getCategoryDisplayName(weakness.category)}</strong> (${weakness.score}/100)<br>
+                                        <span style="color: #e0e0e0;">${weakness.description}</span><br>
+                                        <small style="color: #b8b8b8;">Độ ưu tiên: ${weakness.priority}</small>
+                                    </div>
+                                `).join('') : 
+                                '<div style="color: #b8b8b8;">CV có chất lượng tốt, không có điểm yếu nổi bật</div>'
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Recommendations -->
+                    <div class="recommendations-section">
+                        <div class="recommendations-title">💡 Đề xuất cải thiện</div>
+                        
+                        <div class="recommendation-tabs">
+                            <div class="recommendation-tab active" onclick="showRecommendationTab(this, 'priority')">Ưu tiên cao</div>
+                            <div class="recommendation-tab" onclick="showRecommendationTab(this, 'immediate')">Ngay lập tức</div>
+                            <div class="recommendation-tab" onclick="showRecommendationTab(this, 'shortTerm')">Ngắn hạn</div>
+                            <div class="recommendation-tab" onclick="showRecommendationTab(this, 'longTerm')">Dài hạn</div>
+                        </div>
+                        
+                        <div class="recommendation-content active" data-tab="priority">
+                            ${result.recommendations.priority.length > 0 ? 
+                                result.recommendations.priority.map(rec => `
+                                    <div class="recommendation-item">
+                                        <div class="recommendation-category">${getCategoryDisplayName(rec.category)} - ${rec.urgency}</div>
+                                        <div class="recommendation-text">${rec.issue}</div>
+                                    </div>
+                                `).join('') : 
+                                '<div class="recommendation-item"><div class="recommendation-text">CV có chất lượng tốt, không có vấn đề ưu tiên cao</div></div>'
+                            }
+                        </div>
+                        
+                        <div class="recommendation-content" data-tab="immediate">
+                            ${result.recommendations.immediate.length > 0 ? 
+                                result.recommendations.immediate.map(rec => `
+                                    <div class="recommendation-item">
+                                        <div class="recommendation-category">${getCategoryDisplayName(rec.category)}</div>
+                                        <div class="recommendation-text">${rec.recommendation}</div>
+                                    </div>
+                                `).join('') : 
+                                '<div class="recommendation-item"><div class="recommendation-text">Không có đề xuất cần thực hiện ngay</div></div>'
+                            }
+                        </div>
+                        
+                        <div class="recommendation-content" data-tab="shortTerm">
+                            ${result.recommendations.shortTerm.length > 0 ? 
+                                result.recommendations.shortTerm.map(rec => `
+                                    <div class="recommendation-item">
+                                        <div class="recommendation-category">${getCategoryDisplayName(rec.category)}</div>
+                                        <div class="recommendation-text">${rec.recommendation}</div>
+                                    </div>
+                                `).join('') : 
+                                '<div class="recommendation-item"><div class="recommendation-text">Không có đề xuất ngắn hạn</div></div>'
+                            }
+                        </div>
+                        
+                        <div class="recommendation-content" data-tab="longTerm">
+                            ${result.recommendations.longTerm.length > 0 ? 
+                                result.recommendations.longTerm.map(rec => `
+                                    <div class="recommendation-item">
+                                        <div class="recommendation-category">${getCategoryDisplayName(rec.category)}</div>
+                                        <div class="recommendation-text">${rec.recommendation}</div>
+                                    </div>
+                                `).join('') : 
+                                '<div class="recommendation-item"><div class="recommendation-text">Không có đề xuất dài hạn</div></div>'
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Improvement Potential -->
+                    ${result.analysis.improvementPotential.length > 0 ? `
+                        <div style="background: rgba(26, 26, 26, 0.8); border-radius: 15px; padding: 25px; margin-top: 20px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                            <h3 style="color: #00d4aa; margin-bottom: 15px;">📈 Tiềm năng cải thiện</h3>
+                            ${result.analysis.improvementPotential.map(improvement => `
+                                <div style="background: rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 15px; margin-bottom: 10px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                        <strong style="color: #00b4d8;">${getCategoryDisplayName(improvement.category)}</strong>
+                                        <span style="color: #00d4aa;">+${improvement.impactOnFinalScore} điểm</span>
+                                    </div>
+                                    <div style="color: #b8b8b8; font-size: 0.9rem;">
+                                        Hiện tại: ${improvement.currentScore}/100 | 
+                                        Tiềm năng: +${improvement.potentialIncrease} điểm | 
+                                        Độ khó: ${improvement.effort} | 
+                                        Ưu tiên: ${improvement.priority}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function formatCategoryScore(category, displayName, icon, scoreData) {
+            const score = scoreData.score || 0;
+            const level = getScoreLevel(score);
+            
+            return `
+                <div class="category-score-item">
+                    <div class="category-title">${icon} ${displayName}</div>
+                    <div class="category-score">${Math.round(score)}</div>
+                    <div class="category-level">${level}</div>
+                    <div class="score-bar">
+                        <div class="score-fill" style="width: ${score}%"></div>
+                    </div>
+                    <div style="color: #b8b8b8; font-size: 0.8rem; margin-top: 5px;">
+                        ${scoreData.recommendations?.slice(0, 2).join('. ') || 'Không có đề xuất cụ thể'}
+                    </div>
+                </div>
+            `;
+        }
+
+        function getCategoryDisplayName(category) {
+            const names = {
+                keyword: 'Từ khóa',
+                skill: 'Kỹ năng', 
+                experience: 'Kinh nghiệm',
+                education: 'Học vấn',
+                formatting: 'Định dạng'
+            };
+            return names[category] || category;
+        }
+
+        function getScoreLevel(score) {
+            if (score >= 85) return 'Xuất sắc';
+            if (score >= 70) return 'Tốt';
+            if (score >= 55) return 'Trung bình';
+            if (score >= 40) return 'Yếu';
+            return 'Rất yếu';
+        }
+
+        function showRecommendationTab(tabElement, tabName) {
+            // Remove active class from all tabs and contents
+            document.querySelectorAll('.recommendation-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.recommendation-content').forEach(content => content.classList.remove('active'));
+            
+            // Add active class to clicked tab
+            tabElement.classList.add('active');
+            
+            // Show corresponding content
+            const content = document.querySelector(`[data-tab="${tabName}"]`);
+            if (content) {
+                content.classList.add('active');
+            }
+        }
+
+        function formatResult(result, mode) {
+            // Enhanced formatting based on mode
+            if (mode === 'score') {
+                return formatScoreResult(result);
+            } else if (mode === 'agent') {
+                return formatAgentResult(result);
+            } else if (mode === 'errors') {
+                return formatErrorResult(result);
+            } else {
+                return formatGeneralResult(result);
+            }
+        }
+
+        function formatScoreResult(result) {
+            // Parse the result to extract structured information
+            const lines = result.split('\n');
+            let score = null;
+            let strengths = [];
+            let weaknesses = [];
+            let improvements = [];
+            let sections = {};
+            
+            // Extract score
+            const scoreMatch = result.match(/(\d+(?:\.\d+)?)[\/\s]*(?:100|điểm)/i);
+            score = scoreMatch ? parseFloat(scoreMatch[1]) : null;
+            
+            // Extract sections
+            let currentSection = '';
+            for (let line of lines) {
+                if (line.includes('điểm mạnh') || line.includes('Điểm mạnh')) {
+                    currentSection = 'strengths';
+                } else if (line.includes('điểm yếu') || line.includes('cần cải thiện') || line.includes('Điểm yếu')) {
+                    currentSection = 'weaknesses';
+                } else if (line.includes('đề xuất') || line.includes('cải thiện') || line.includes('Đề xuất')) {
+                    currentSection = 'improvements';
+                } else if (line.trim() && currentSection) {
+                    const cleanLine = line.replace(/^\d+\.?\s*/, '').replace(/^[-*]\s*/, '').trim();
+                    if (cleanLine) {
+                        if (currentSection === 'strengths') strengths.push(cleanLine);
+                        else if (currentSection === 'weaknesses') weaknesses.push(cleanLine);
+                        else if (currentSection === 'improvements') improvements.push(cleanLine);
+                    }
+                }
+            }
+            
+            let formatted = '';
+            
+            // Score card
+            if (score !== null) {
+                formatted += `
+                    <div class="score-card">
+                        <div class="score-value">${score}/100</div>
+                        <div class="score-label">Điểm tổng thể CV</div>
+                    </div>
+                `;
+            }
+            
+            // Analysis summary
+            formatted += `
+                <div class="analysis-summary">
+                    <h3 style="margin-bottom: 20px; text-align: center;">📊 Phân tích chi tiết CV</h3>
+                    
+                    <div class="analysis-grid">
+                        <div class="analysis-card">
+                            <h4>💪 Điểm mạnh</h4>
+                            <ul class="strengths-list">
+                                ${strengths.map((item, index) => `<li>${String.fromCharCode(97 + index)}. ${item}</li>`).join('')}
+                            </ul>
+                        </div>
+                        
+                        <div class="analysis-card">
+                            <h4>⚠️ Điểm cần cải thiện</h4>
+                            <ul class="weaknesses-list">
+                                ${weaknesses.map((item, index) => `<li>${String.fromCharCode(97 + index)}. ${item}</li>`).join('')}
+                            </ul>
+                        </div>
+                        
+                        <div class="analysis-card">
+                            <h4>💡 Đề xuất cải thiện</h4>
+                            <ul class="improvements-list">
+                                ${improvements.map((item, index) => `<li>${String.fromCharCode(97 + index)}. ${item}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Full result
+            formatted += `
+                <div style="background: rgba(0, 0, 0, 0.2); padding: 20px; border-radius: 10px; margin-top: 20px;">
+                    <h4 style="color: #00d4aa; margin-bottom: 15px;">📄 Báo cáo chi tiết</h4>
+                    <div style="white-space: pre-line; line-height: 1.6; color: #e0e0e0;">${result}</div>
+                </div>
+            `;
+            
+            return formatted;
+        }
+
+        function formatAgentResult(result) {
+            // Parse CV information from the result
+            const lines = result.split('\n');
+            let name = 'Tên ứng viên';
+            let title = 'Vị trí ứng tuyển';
+            let contact = {
+                phone: '',
+                email: '',
+                address: ''
+            };
+            let sections = {
+                experience: [],
+                education: [],
+                skills: [],
+                languages: []
+            };
+            
+            // Extract basic info
+            for (let i = 0; i < Math.min(10, lines.length); i++) {
+                const line = lines[i].trim();
+                if (line && !line.includes('CV') && !line.includes('Tên:') && line.length > 3 && line.length < 50) {
+                    if (!name || name === 'Tên ứng viên') {
+                        name = line.replace(/^Họ tên:?\s*/i, '').replace(/^Tên:?\s*/i, '');
+                    }
+                }
+            }
+            
+            return `
+                <div class="agent-cv-preview">
+                    <h3 style="color: #00d4aa; margin-bottom: 20px; text-align: center;">🤖 CV được tối ưu bởi AI Agent</h3>
+                    
+                    <div class="cv-container">
+                        <div class="cv-header">
+                            <div class="cv-name">${name}</div>
+                            <div class="cv-title">${title}</div>
+                            <div class="cv-contact">
+                                <div class="cv-contact-item">📞 ${contact.phone || 'Số điện thoại'}</div>
+                                <div class="cv-contact-item">📧 ${contact.email || 'Email'}</div>
+                                <div class="cv-contact-item">📍 ${contact.address || 'Địa chỉ'}</div>
+                            </div>
+                        </div>
+
+                        <div class="cv-section">
+                            <div class="cv-section-title">🎯 Mục tiêu nghề nghiệp</div>
+                            <div style="color: #555; line-height: 1.8; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #00d4aa;">
+                                Tôi mong muốn ứng tuyển vào vị trí phù hợp với chuyên môn và kinh nghiệm của mình, 
+                                đóng góp vào sự phát triển của công ty và phát triển bản thân trong môi trường chuyên nghiệp.
+                            </div>
+                        </div>
+
+                        <div class="cv-section">
+                            <div class="cv-section-title">💼 Kinh nghiệm làm việc</div>
+                            <div class="cv-item">
+                                <div class="cv-item-header">
+                                    <div>
+                                        <div class="cv-item-title">Vị trí công việc</div>
+                                        <div class="cv-item-company">Tên công ty</div>
+                                    </div>
+                                    <div class="cv-item-date">Thời gian</div>
+                                </div>
+                                <div class="cv-item-description">
+                                    1. Mô tả công việc và thành tích đạt được<br>
+                                    2. Các dự án quan trọng đã tham gia<br>
+                                    3. Kỹ năng và kinh nghiệm tích lũy
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="cv-section">
+                            <div class="cv-section-title">🎓 Học vấn</div>
+                            <div class="cv-item">
+                                <div class="cv-item-header">
+                                    <div>
+                                        <div class="cv-item-title">Bằng cấp / Chuyên ngành</div>
+                                        <div class="cv-item-company">Tên trường</div>
+                                    </div>
+                                    <div class="cv-item-date">Năm tốt nghiệp</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="cv-section">
+                            <div class="cv-section-title">🛠️ Kỹ năng</div>
+                            <div class="cv-skills-grid">
+                                <div class="cv-skill-item">Kỹ năng chuyên môn</div>
+                                <div class="cv-skill-item">Kỹ năng máy tính</div>
+                                <div class="cv-skill-item">Kỹ năng mềm</div>
+                                <div class="cv-skill-item">Kỹ năng quản lý</div>
+                            </div>
+                        </div>
+
+                        <div class="cv-section">
+                            <div class="cv-section-title">🌐 Ngoại ngữ</div>
+                            <div class="cv-languages">
+                                <div class="cv-language-item">Tiếng Anh - Trung cấp</div>
+                                <div class="cv-language-item">Tiếng Nhật - Cơ bản</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="background: rgba(0, 0, 0, 0.2); padding: 20px; border-radius: 10px; margin-top: 20px;">
+                    <h4 style="color: #00d4aa; margin-bottom: 15px;">📝 Nội dung CV được tối ưu</h4>
+                    <div style="white-space: pre-line; line-height: 1.6; font-family: monospace; color: #e0e0e0;">
+                        ${result}
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatErrorResult(result) {
+            // Parse errors by category
+            const lines = result.split('\n');
+            let errors = {
+                spelling: [],
+                format: [],
+                content: [],
+                professional: []
+            };
+            
+            let currentCategory = '';
+            for (let line of lines) {
+                const cleanLine = line.trim();
+                if (cleanLine.includes('chính tả') || cleanLine.includes('ngữ pháp')) {
+                    currentCategory = 'spelling';
+                } else if (cleanLine.includes('định dạng') || cleanLine.includes('bố cục')) {
+                    currentCategory = 'format';
+                } else if (cleanLine.includes('thiếu sót') || cleanLine.includes('nội dung')) {
+                    currentCategory = 'content';
+                } else if (cleanLine.includes('chuyên nghiệp') || cleanLine.includes('trình bày')) {
+                    currentCategory = 'professional';
+                } else if (cleanLine && currentCategory) {
+                    const errorText = cleanLine.replace(/^\d+\.?\s*/, '').replace(/^[-*]\s*/, '').trim();
+                    if (errorText && errorText.length > 5) {
+                        errors[currentCategory].push(errorText);
+                    }
+                }
+            }
+            
+            return `
+                <div class="errors-section">
+                    <h3 style="color: #ef4444; margin-bottom: 25px; text-align: center;">🔍 Phân tích lỗi CV</h3>
+                    
+                    <div class="analysis-grid">
+                        <div class="error-category">
+                            <h4>📝 Lỗi chính tả & Ngữ pháp</h4>
+                            ${errors.spelling.length > 0 ? 
+                                errors.spelling.map(error => `<div class="error-item">${error}</div>`).join('') :
+                                '<div class="error-item">Không phát hiện lỗi chính tả</div>'
+                            }
+                        </div>
+                        
+                        <div class="error-category">
+                            <h4>🎨 Lỗi định dạng & Bố cục</h4>
+                            ${errors.format.length > 0 ? 
+                                errors.format.map(error => `<div class="error-item">${error}</div>`).join('') :
+                                '<div class="error-item">Định dạng CV ổn</div>'
+                            }
+                        </div>
+                        
+                        <div class="error-category">
+                            <h4>📋 Nội dung thiếu sót</h4>
+                            ${errors.content.length > 0 ? 
+                                errors.content.map(error => `<div class="error-item">${error}</div>`).join('') :
+                                '<div class="error-item">Nội dung đầy đủ</div>'
+                            }
+                        </div>
+                        
+                        <div class="error-category">
+                            <h4>💼 Tính chuyên nghiệp</h4>
+                            ${errors.professional.length > 0 ? 
+                                errors.professional.map(error => `<div class="error-item">${error}</div>`).join('') :
+                                '<div class="error-item">Trình bày chuyên nghiệp</div>'
+                            }
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="background: rgba(0, 0, 0, 0.2); padding: 20px; border-radius: 10px; margin-top: 20px;">
+                    <h4 style="color: #ef4444; margin-bottom: 15px;">� Báo cáo chi tiết</h4>
+                    <div style="white-space: pre-line; line-height: 1.6; color: #e0e0e0;">
+                        ${result}
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatGeneralResult(result) {
+            // Parse comprehensive analysis
+            const lines = result.split('\n');
+            let sections = {
+                overview: [],
+                details: [],
+                market: [],
+                recommendations: [],
+                positions: []
+            };
+            
+            let currentSection = '';
+            for (let line of lines) {
+                const cleanLine = line.trim();
+                if (cleanLine.includes('tổng quan') || cleanLine.includes('đánh giá chung')) {
+                    currentSection = 'overview';
+                } else if (cleanLine.includes('chi tiết') || cleanLine.includes('phân tích từng phần')) {
+                    currentSection = 'details';
+                } else if (cleanLine.includes('thị trường') || cleanLine.includes('tiêu chuẩn')) {
+                    currentSection = 'market';
+                } else if (cleanLine.includes('cải thiện') || cleanLine.includes('lộ trình')) {
+                    currentSection = 'recommendations';
+                } else if (cleanLine.includes('vị trí') || cleanLine.includes('công việc phù hợp')) {
+                    currentSection = 'positions';
+                } else if (cleanLine && currentSection) {
+                    const text = cleanLine.replace(/^\d+\.?\s*/, '').replace(/^[-*]\s*/, '').trim();
+                    if (text && text.length > 10) {
+                        sections[currentSection].push(text);
+                    }
+                }
+            }
+            
+            return `
+                <div class="analysis-summary">
+                    <h3 style="margin-bottom: 25px; text-align: center;">📈 Phân tích CV toàn diện</h3>
+                    
+                    <div class="analysis-grid">
+                        <div class="analysis-card">
+                            <h4>🎯 Đánh giá tổng quan</h4>
+                            <div style="color: #e0e0e0; line-height: 1.8;">
+                                ${sections.overview.length > 0 ? 
+                                    sections.overview.map((item, index) => `<p>${index + 1}. ${item}</p>`).join('') :
+                                    '<p>1. CV có cấu trúc cơ bản và cần được cải thiện để tăng tính cạnh tranh.</p>'
+                                }
+                            </div>
+                        </div>
+                        
+                        <div class="analysis-card">
+                            <h4>🔍 Phân tích chi tiết</h4>
+                            <div style="color: #e0e0e0; line-height: 1.8;">
+                                ${sections.details.length > 0 ? 
+                                    sections.details.map((item, index) => `<p>a. ${item}</p>`).join('') :
+                                    '<p>a. Các phần trong CV cần được xem xét và tối ưu hóa.</p>'
+                                }
+                            </div>
+                        </div>
+                        
+                        <div class="analysis-card">
+                            <h4>📊 So sánh thị trường</h4>
+                            <div style="color: #e0e0e0; line-height: 1.8;">
+                                ${sections.market.length > 0 ? 
+                                    sections.market.map((item, index) => `<p>${String.fromCharCode(97 + index)}. ${item}</p>`).join('') :
+                                    '<p>a. CV cần được cải thiện để đáp ứng tiêu chuẩn thị trường hiện tại.</p>'
+                                }
+                            </div>
+                        </div>
+                        
+                        <div class="analysis-card">
+                            <h4>🚀 Lộ trình cải thiện</h4>
+                            <ul class="improvements-list">
+                                ${sections.recommendations.length > 0 ? 
+                                    sections.recommendations.map((item, index) => `<li>${String.fromCharCode(97 + index)}. ${item}</li>`).join('') :
+                                    '<li>a. Cập nhật thông tin cá nhân</li><li>b. Cải thiện mô tả kinh nghiệm</li><li>c. Bổ sung kỹ năng relevant</li>'
+                                }
+                            </ul>
+                        </div>
+                        
+                        <div class="analysis-card">
+                            <h4>💼 Vị trí phù hợp</h4>
+                            <div style="color: #e0e0e0; line-height: 1.8;">
+                                ${sections.positions.length > 0 ? 
+                                    sections.positions.map((item, index) => `<p>${index + 1}. ${item}</p>`).join('') :
+                                    '<p>1. Các vị trí entry-level trong lĩnh vực tương ứng</p><p>2. Thực tập sinh hoặc nhân viên mới</p>'
+                                }
+                            </div>
+                        </div>
+                        
+                        <div class="analysis-card">
+                            <h4>📈 Dự đoán thành công</h4>
+                            <div style="text-align: center;">
+                                <div style="font-size: 2rem; color: #ffd700; margin: 15px 0;">⭐⭐⭐</div>
+                                <p style="color: #e0e0e0;">Khả năng trung bình</p>
+                                <p style="font-size: 0.9rem; color: #b0b0b0; margin-top: 10px;">
+                                    Cần cải thiện để tăng cơ hội được tuyển dụng
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="background: rgba(0, 0, 0, 0.2); padding: 20px; border-radius: 10px; margin-top: 20px;">
+                    <h4 style="color: #00d4aa; margin-bottom: 15px;">📄 Báo cáo phân tích đầy đủ</h4>
+                    <div style="white-space: pre-line; line-height: 1.6; color: #e0e0e0;">
+                        ${result}
+                    </div>
+                </div>
+            `;
+        }
+
+        function showLoading() {
+            analysisResult.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Đang phân tích CV với AI...</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+            `;
+            
+            // Simulate progress
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 90) progress = 90;
+                
+                const progressFill = document.querySelector('.progress-fill');
+                if (progressFill) {
+                    progressFill.style.width = progress + '%';
+                }
+                
+                if (progress >= 90) {
+                    clearInterval(progressInterval);
+                }
+            }, 500);
+        }
+
+        function hideLoading() {
+            const loadingElement = document.querySelector('.loading');
+            if (loadingElement) {
+                loadingElement.remove();
+            }
+        }
+
+        function showError(message) {
+            analysisResult.innerHTML = `
+                <div class="error-message">
+                    <h3>❌ Lỗi</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.innerHTML = `
+                <h3>✅ Thành công</h3>
+                <p>${message}</p>
+            `;
+            
+            analysisResult.insertBefore(successDiv, analysisResult.firstChild);
+            
+            setTimeout(() => {
+                successDiv.remove();
+            }, 3000);
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            createParticles();
+            
+            // Add some welcome animation
+            setTimeout(() => {
+                const header = document.querySelector('.header');
+                if (header) {
+                    header.style.transform = 'translateY(0)';
+                    header.style.opacity = '1';
+                }
+            }, 300);
+        });
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === 'o') {
+                    e.preventDefault();
+                    fileInput.click();
+                }
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (!analyzeBtn.disabled) {
+                        analyzeCV();
+                    }
+                }
+            }
+        });
+
+        // Add responsive handling
+        window.addEventListener('resize', function() {
+            // Adjust layout for mobile devices
+            const mainContent = document.querySelector('.main-content');
+            if (window.innerWidth <= 768) {
+                mainContent.style.gridTemplateColumns = '1fr';
+            } else {
+                mainContent.style.gridTemplateColumns = '400px 1fr';
+            }
+        });
+    </script>
+</body>
+</html>
+ 
