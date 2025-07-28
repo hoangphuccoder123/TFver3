@@ -7,9 +7,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js" type="module"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js" type="module"></script>
+
     
     <style>
         * {
@@ -529,74 +527,30 @@
             <!-- Signup Form -->
             <form id="signupForm" class="form-section active">
                 <h2 class="form-title">Tạo tài khoản mới</h2>
-                <p class="form-subtitle">Chọn loại tài khoản và bắt đầu hành trình!</p>
 
-                <!-- Account Type Selector -->
-                <div class="account-type-selector">
-                    <div class="account-type-option selected" onclick="selectAccountType('candidate', this)">
-                        <span class="material-symbols-outlined">person</span>
-                        <h3>Ứng viên</h3>
-                        <p>Tìm kiếm cơ hội nghề nghiệp</p>
+                <p class="form-subtitle">Điền thông tin để đăng ký tài khoản</p>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="firstName">Họ *</label>
+                        <input type="text" id="firstName" class="form-input" name="firstName" required>
                     </div>
-                    <div class="account-type-option" onclick="selectAccountType('recruiter', this)">
-                        <span class="material-symbols-outlined">business</span>
-                        <h3>Nhà tuyển dụng</h3>
-                        <p>Tìm kiếm nhân tài</p>
+                    <div class="form-group">
+                        <label class="form-label" for="lastName">Tên *</label>
+                        <input type="text" id="lastName" class="form-input" name="lastName" required>
                     </div>
                 </div>
 
-                <input type="hidden" name="accountType" value="candidate">
-
-                <!-- Candidate Fields -->
-                <div id="candidate-fields">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label" for="firstName">Họ *</label>
-                            <input type="text" id="firstName" class="form-input" name="firstName" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="lastName">Tên *</label>
-                            <input type="text" id="lastName" class="form-input" name="lastName" required>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="candidateEmail">Email *</label>
-                        <input type="email" id="candidateEmail" class="form-input" name="email" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="phone">Số điện thoại</label>
-                        <input type="tel" id="phone" class="form-input" name="phone" placeholder="0123456789">
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="candidatePassword">Mật khẩu *</label>
-                        <input type="password" id="candidatePassword" class="form-input" name="password" required minlength="8">
-                    </div>
+                <div class="form-group">
+                    <label class="form-label" for="candidateEmail">Email *</label>
+                    <input type="email" id="candidateEmail" class="form-input" name="email" required>
                 </div>
 
-                <!-- Recruiter Fields (hidden by default) -->
-                <div id="recruiter-fields" style="display: none;">
-                    <div class="form-group">
-                        <label class="form-label" for="companyName">Tên công ty *</label>
-                        <input type="text" id="companyName" class="form-input" name="companyName" placeholder="Tên công ty của bạn">
-                    </div>
 
-                    <div class="form-group">
-                        <label class="form-label" for="contactName">Họ và tên người liên hệ *</label>
-                        <input type="text" id="contactName" class="form-input" name="contactName" placeholder="Tên người đại diện công ty">
-                    </div>
 
-                    <div class="form-group">
-                        <label class="form-label" for="companyEmail">Email công ty *</label>
-                        <input type="email" id="companyEmail" class="form-input" name="companyEmail" placeholder="contact@company.com">
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="companyPassword">Mật khẩu *</label>
-                        <input type="password" id="companyPassword" class="form-input" name="companyPassword" minlength="8">
-                    </div>
+                <div class="form-group">
+                    <label class="form-label" for="candidatePassword">Mật khẩu *</label>
+                    <input type="password" id="candidatePassword" class="form-input" name="password" required minlength="8">
                 </div>
 
                 <div class="checkbox-group">
@@ -622,50 +576,6 @@
     <div id="toastContainer"></div>
 
     <script>
-        // Account type selection
-        function selectAccountType(type, element) {
-            // Update hidden input
-            document.querySelector('input[name="accountType"]').value = type;
-            
-            // Update visual selection
-            document.querySelectorAll('.account-type-option').forEach(option => {
-                option.classList.remove('selected');
-            });
-            element.classList.add('selected');
-            
-            // Show/hide appropriate fields
-            const candidateFields = document.getElementById('candidate-fields');
-            const recruiterFields = document.getElementById('recruiter-fields');
-            
-            if (type === 'recruiter') {
-                candidateFields.style.display = 'none';
-                recruiterFields.style.display = 'block';
-                
-                // Update required attributes
-                candidateFields.querySelectorAll('input[required]').forEach(input => {
-                    input.removeAttribute('required');
-                });
-                recruiterFields.querySelectorAll('input').forEach(input => {
-                    if (input.name !== 'accountType') {
-                        input.setAttribute('required', '');
-                    }
-                });
-            } else {
-                candidateFields.style.display = 'block';
-                recruiterFields.style.display = 'none';
-                
-                // Update required attributes
-                recruiterFields.querySelectorAll('input[required]').forEach(input => {
-                    input.removeAttribute('required');
-                });
-                candidateFields.querySelectorAll('input').forEach(input => {
-                    if (input.name === 'firstName' || input.name === 'lastName' || input.name === 'email' || input.name === 'password') {
-                        input.setAttribute('required', '');
-                    }
-                });
-            }
-        }
-
         // Show toast notification
         function showToast(message, type = 'success') {
             const toast = document.createElement('div');
@@ -689,104 +599,73 @@
         }
     </script>
 
+
     <!-- Firebase Scripts -->
     <script type="module">
-        // Import Firebase modules
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js';
-        import { getAuth, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
-        import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
+      // Import the functions you need from the SDKs you need
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+      import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+      import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBLfgxfm2W6nPKfW_JhT3E1rVnbcbZBo7M",
-            authDomain: "techcv-6c315.firebaseapp.com",
-            projectId: "techcv-6c315",
-            storageBucket: "techcv-6c315.firebasestorage.app",
-            messagingSenderId: "406323685493",
-            appId: "1:406323685493:web:af58cc298ee07e975bb03c"
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyCddND9ciUpeL3xTpWTUMyQ0TG9FyUCdiU",
+        authDomain: "gen-lang-client-0595612537.firebaseapp.com",
+        projectId: "gen-lang-client-0595612537",
+        storageBucket: "gen-lang-client-0595612537.firebasestorage.app",
+        messagingSenderId: "1022447215307",
+        appId: "1:1022447215307:web:5fbf39694b90d420d2314e"
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      // Handle signup form submission
+      document.getElementById('signupForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+
+        const email = formData.get('email');
+        const password = formData.get('password');
+        const userData = {
+          firstName: formData.get('firstName'),
+          lastName: formData.get('lastName'),
+          fullName: `${formData.get('firstName')} ${formData.get('lastName')}`,
+          email: email,
+          createdAt: new Date()
         };
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        submitBtn.classList.add('loading');
 
-        // Handle signup form submission
-        document.getElementById('signupForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const accountType = formData.get('accountType');
-            const submitBtn = e.target.querySelector('button[type="submit"]');
-            
-            let email, password, userData;
-
-            if (accountType === 'candidate') {
-                email = formData.get('email');
-                password = formData.get('password');
-                userData = {
-                    accountType: 'candidate',
-                    firstName: formData.get('firstName'),
-                    lastName: formData.get('lastName'),
-                    fullName: `${formData.get('firstName')} ${formData.get('lastName')}`,
-                    email: email,
-                    phone: formData.get('phone') || '',
-                    createdAt: new Date()
-                };
-            } else {
-                email = formData.get('companyEmail');
-                password = formData.get('companyPassword');
-                userData = {
-                    accountType: 'recruiter',
-                    companyName: formData.get('companyName'),
-                    contactName: formData.get('contactName'),
-                    email: email,
-                    createdAt: new Date()
-                };
-            }
-            
-            submitBtn.classList.add('loading');
-            
-            try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-                
-                // Save user data to Firestore
-                await setDoc(doc(db, 'users', user.uid), userData);
-                
-                showToast('Đăng ký thành công! Đang chuyển đến trang đăng nhập...', 'success');
-                
-                // Reset form
-                document.getElementById('signupForm').reset();
-                submitBtn.classList.remove('loading');
-                
-                // Reset account type selector to default
-                document.querySelectorAll('.account-type-option').forEach(option => {
-                    option.classList.remove('selected');
-                });
-                document.querySelector('.account-type-option').classList.add('selected');
-                document.querySelector('input[name="accountType"]').value = 'candidate';
-                
-                // Show candidate fields and hide recruiter fields
-                document.getElementById('candidate-fields').style.display = 'block';
-                document.getElementById('recruiter-fields').style.display = 'none';
-                
-                // Redirect to login page after successful registration
-                setTimeout(() => {
-                    window.location.href = 'đăng nhập.html';
-                }, 1500);
-            } catch (error) {
-                submitBtn.classList.remove('loading');
-                let errorMessage = 'Đã xảy ra lỗi khi đăng ký';
-                if (error.code === 'auth/email-already-in-use') {
-                    errorMessage = 'Email này đã được sử dụng';
-                } else if (error.code === 'auth/weak-password') {
-                    errorMessage = 'Mật khẩu phải có ít nhất 6 ký tự';
-                } else if (error.code === 'auth/invalid-email') {
-                    errorMessage = 'Email không hợp lệ';
-                }
-                showToast(errorMessage, 'error');
-            }
-        });
+        try {
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          const user = userCredential.user;
+          // Save user data to Firestore
+          await setDoc(doc(db, 'users', user.uid), userData);
+          showToast('Đăng ký thành công! Đang chuyển đến trang đăng nhập...', 'success');
+          // Reset form
+          document.getElementById('signupForm').reset();
+          submitBtn.classList.remove('loading');
+          // Redirect to login page after successful registration
+          setTimeout(() => {
+            window.location.href = 'đăng nhập.html';
+          }, 1500);
+        } catch (error) {
+          submitBtn.classList.remove('loading');
+          let errorMessage = 'Đã xảy ra lỗi khi đăng ký';
+          if (error.code === 'auth/email-already-in-use') {
+            errorMessage = 'Email này đã được sử dụng';
+          } else if (error.code === 'auth/weak-password') {
+            errorMessage = 'Mật khẩu phải có ít nhất 6 ký tự';
+          } else if (error.code === 'auth/invalid-email') {
+            errorMessage = 'Email không hợp lệ';
+          }
+          showToast(errorMessage, 'error');
+        }
+      });
     </script>
 </body>
 </html>
