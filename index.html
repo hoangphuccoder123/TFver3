@@ -1365,10 +1365,16 @@
         const exploreBtn = document.querySelector('.cta-btn.secondary');
         const featuresGrid = document.getElementById('features');
         if (exploreBtn && featuresGrid) {
+            let featuresOpen = false;
             exploreBtn.addEventListener('click', function(e) {
                 e.preventDefault();
-                featuresGrid.style.display = 'grid';
-                featuresGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                featuresOpen = !featuresOpen;
+                if (featuresOpen) {
+                    featuresGrid.style.display = 'grid';
+                    featuresGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                    featuresGrid.style.display = 'none';
+                }
             });
         }
 
@@ -1501,4 +1507,4 @@
         document.head.appendChild(style);
     </script>
 </body>
-</html>
+</html> 
