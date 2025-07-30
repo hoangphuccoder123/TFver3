@@ -510,6 +510,135 @@
             left: 375px;
         }
 
+        /* Transparent Top Navbar */
+        .top-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            z-index: 2000;
+            background: rgba(20, 20, 30, 0.13);
+            backdrop-filter: blur(18px) saturate(180%);
+            box-shadow: 0 2px 24px 0 rgba(0,0,0,0.10);
+            border-bottom: 1px solid rgba(0,212,170,0.08);
+            transition: background 0.3s, box-shadow 0.3s, opacity 0.6s;
+            opacity: 0;
+            animation: navbarFadeIn 1s ease forwards;
+        }
+        @keyframes navbarFadeIn {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .top-navbar.scrolled {
+            background: rgba(20, 20, 30, 0.32);
+            box-shadow: 0 4px 24px 0 rgba(0,212,170,0.18);
+            border-bottom: 1.5px solid #00d4aa44;
+        }
+        .top-nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 32px;
+        }
+        .top-nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+        .top-nav-logo-img {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            object-fit: cover;
+            box-shadow: 0 2px 8px rgba(0,212,170,0.10);
+        }
+        .top-nav-brand {
+            font-size: 1.35rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #00d4aa, #00b4d8, #ff6ec4);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-fill-color: transparent;
+            letter-spacing: 1px;
+        }
+        .top-nav-links {
+            display: flex;
+            gap: 22px;
+        }
+        .top-nav-link {
+            color: #e0f7fa;
+            font-size: 1rem;
+            font-weight: 500;
+            text-decoration: none;
+            padding: 8px 0;
+            position: relative;
+            transition: color 0.2s;
+        }
+        .top-nav-link::after {
+            content: '';
+            display: block;
+            height: 2px;
+            width: 0;
+            background: linear-gradient(90deg, #00d4aa, #00b4d8);
+            border-radius: 2px;
+            transition: width 0.3s;
+            position: absolute;
+            left: 0;
+            bottom: -2px;
+        }
+        .top-nav-link:hover {
+            color: #00d4aa;
+        }
+        .top-nav-link:hover::after {
+            width: 100%;
+        }
+        .top-nav-actions {
+            display: flex;
+            gap: 12px;
+        }
+        .top-nav-btn {
+            padding: 7px 20px;
+            border-radius: 20px;
+            font-size: 0.98rem;
+            font-weight: 600;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s, color 0.2s;
+        }
+        .top-nav-btn.login {
+            background: linear-gradient(90deg, #00d4aa, #00b4d8);
+            color: #fff;
+            border: none;
+        }
+        .top-nav-btn.login:hover {
+            background: linear-gradient(90deg, #00b8a0, #0098c4);
+        }
+        .top-nav-btn.register {
+            background: transparent;
+            border: 2px solid #00d4aa;
+            color: #00d4aa;
+        }
+        .top-nav-btn.register:hover {
+            background: rgba(0,212,170,0.10);
+            border-color: #00b8a0;
+        }
+        @media (max-width: 900px) {
+            .top-nav-content { flex-direction: column; gap: 8px; padding: 10px 10px; }
+            .top-nav-links { gap: 12px; }
+            .top-nav-actions { gap: 8px; }
+        }
+        @media (max-width: 600px) {
+            .top-nav-content { flex-direction: column; gap: 6px; padding: 8px 2vw; }
+            .top-nav-links { flex-wrap: wrap; gap: 8px; justify-content: center; }
+            .top-nav-btn { padding: 6px 12px; font-size: 0.93rem; }
+        }
+
         /* Main Content */
         .main-content {
             position: relative;
@@ -566,11 +695,32 @@
             }
         }
 
-        .hero-subtitle {
-            font-size: clamp(1.2rem, 3vw, 1.8rem);
-            color: #b0b0b0;
+        .hero-slogan {
+            font-size: clamp(1.3rem, 3vw, 2.1rem);
+            font-weight: 700;
             margin-bottom: 30px;
-            line-height: 1.6;
+            background: linear-gradient(90deg, #00d4aa, #00b4d8, #ff6ec4, #7873f5);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-fill-color: transparent;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 16px rgba(0,212,170,0.15);
+            animation: sloganGlow 2.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes sloganGlow {
+            from { filter: drop-shadow(0 0 8px #00d4aa); }
+            to { filter: drop-shadow(0 0 18px #ff6ec4); }
+        }
+
+        .slogan-highlight {
+            background: linear-gradient(90deg, #ff6ec4, #00b4d8, #00d4aa);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-fill-color: transparent;
+            font-weight: 700;
         }
 
         .hero-description {
@@ -842,6 +992,23 @@
     </style>
 </head>
 <body>
+    <!-- Transparent Top Navigation Bar -->
+    <nav class="top-navbar">
+        <div class="top-nav-content">
+            <a href="index.html" class="top-nav-logo">
+                <img src="ảnh/Logo2.jpg" alt="Logo" class="top-nav-logo-img">
+                <span class="top-nav-brand">TechFuture</span>
+            </a>
+            <div class="top-nav-links">
+                <a href="index.html" class="top-nav-link gradient-text">Trang chủ</a>
+                <a href="agent cv.html" class="top-nav-link gradient-text">AI CV Analyzer</a>
+                <a href="holland+chatbot.html" class="top-nav-link gradient-text">Holland Chatbot</a>
+                <a href="phòng phỏng vấn ảo..html" class="top-nav-link gradient-text">Phỏng vấn ảo</a>
+                <a href="lọc cv.html" class="top-nav-link gradient-text">Lọc CV</a>
+            </div>
+        </div>
+    </nav>
+
     <!-- Animated Background -->
     <div class="gradient-bg"></div>
     <div class="particles" id="particles"></div>
@@ -849,11 +1016,6 @@
 
     <!-- Overlay -->
     <div class="overlay" id="overlay"></div>
-
-    <!-- Menu Toggle Button -->
-    <button class="menu-toggle" id="menuToggle">
-        <span id="menuIcon">☰</span>
-    </button>
 
     <!-- Navigation -->
     <nav class="navbar" id="navbar">
@@ -863,7 +1025,6 @@
                 <div class="nav-logo">TechFuture</div>
             </div>
             <div class="nav-subtitle">Công nghệ AI tiên tiến</div>
-            
             <!-- Auth Buttons -->
             <div class="nav-auth-buttons">
                 <a href="đăng nhập.html" class="nav-auth-btn login">
@@ -892,9 +1053,9 @@
                 <span class="nav-icon"><i class="fas fa-brain"></i></span>
                 Holland Chatbot
             </a>
-            <a href="phòng phỏng vấn ảo..html" class="nav-item">
+            <a href="phòng phỏng vấn ảo.html" class="nav-item">
                 <span class="nav-icon">🎥</span>
-                 Phòng phỏng vấn ảo
+                Phòng phỏng vấn ảo
             </a>
             <a href="lọc cv.html" class="nav-item">
                 <span class="nav-icon">📄</span>
@@ -936,11 +1097,10 @@
         <section class="hero">
             <div class="hero-content">
                 <h1 class="hero-title">TechFuture AI</h1>
-                <p class="hero-subtitle">Nền tảng công nghệ AI hàng đầu Việt Nam</p>
+                <p class="hero-slogan">Khơi nguồn sáng tạo, dẫn lối tương lai!</p>
                 <p class="hero-description">
-                    Khám phá thế giới công nghệ thông minh với các công cụ AI tiên tiến: 
-                    Phân tích CV, Chatbot Holland, Phòng phỏng vấn ảo và nhiều tính năng độc đáo khác.
-                    Trải nghiệm công nghệ tương lai ngay hôm nay!
+                    Đột phá cùng AI: Phân tích CV, Chatbot nghề nghiệp, phỏng vấn ảo và nhiều công nghệ thông minh khác. <br>
+                    <span class="slogan-highlight">Trải nghiệm tương lai ngay hôm nay!</span>
                 </p>
                 
                 <div class="cta-buttons">
@@ -955,7 +1115,7 @@
                 </div>
 
                 <!-- Features Grid -->
-                <div class="features" id="features">
+                <div class="features" id="features" style="display:none;">
                     <div class="feature-card animate-slide-left">
                         <span class="feature-icon">🤖</span>
                         <h3 class="feature-title">AI CV Analyzer</h3>
@@ -964,7 +1124,6 @@
                             tối ưu hóa và đưa ra gợi ý cải thiện CV của bạn.
                         </p>
                     </div>
-                    
                     <div class="feature-card">
                         <span class="feature-icon">🧠</span>
                         <h3 class="feature-title">Holland Chatbot</h3>
@@ -973,7 +1132,6 @@
                             Khám phá định hướng nghề nghiệp phù hợp với bản thân.
                         </p>
                     </div>
-                    
                     <div class="feature-card animate-slide-right">
                         <span class="feature-icon">🎥</span>
                         <h3 class="feature-title">Phòng phỏng vấn ảo</h3>
@@ -982,7 +1140,6 @@
                             Cải thiện kỹ năng và tự tin hơn trong các cuộc phỏng vấn.
                         </p>
                     </div>
-                    
                     <div class="feature-card animate-slide-left">
                         <span class="feature-icon">📊</span>
                         <h3 class="feature-title">Phân tích dữ liệu</h3>
@@ -991,7 +1148,6 @@
                             và báo cáo chi tiết giúp đưa ra quyết định chính xác.
                         </p>
                     </div>
-                    
                     <div class="feature-card">
                         <span class="feature-icon">🎯</span>
                         <h3 class="feature-title">Định hướng nghề nghiệp</h3>
@@ -1000,7 +1156,6 @@
                             và xu hướng thị trường lao động hiện tại.
                         </p>
                     </div>
-                    
                     <div class="feature-card animate-slide-right">
                         <span class="feature-icon">🔮</span>
                         <h3 class="feature-title">Dự đoán tương lai</h3>
@@ -1015,37 +1170,14 @@
     </main>
 
     <script>
-        // Menu Toggle Functionality
-        const menuToggle = document.getElementById('menuToggle');
-        const navbar = document.getElementById('navbar');
-        const overlay = document.getElementById('overlay');
-        const menuIcon = document.getElementById('menuIcon');
-
-        menuToggle.addEventListener('click', toggleMenu);
-        overlay.addEventListener('click', closeMenu);
-
-        function toggleMenu() {
-            navbar.classList.toggle('open');
-            menuToggle.classList.toggle('open');
-            overlay.classList.toggle('active');
-            
-            if (navbar.classList.contains('open')) {
-                menuIcon.innerHTML = '✕';
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.top-navbar');
+            if (window.scrollY > 30) {
+                navbar.classList.add('scrolled');
             } else {
-                menuIcon.innerHTML = '☰';
+                navbar.classList.remove('scrolled');
             }
-        }
-
-        function closeMenu() {
-            navbar.classList.remove('open');
-            menuToggle.classList.remove('open');
-            overlay.classList.remove('active');
-            menuIcon.innerHTML = '☰';
-        }
-
-        // Close menu when clicking on nav links
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', closeMenu);
         });
 
         // Auth buttons special effects
@@ -1229,19 +1361,16 @@
             }, 3000);
         }
 
-        // Smooth scroll for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
+        // Show features only when 'Khám phá tính năng' is clicked
+        const exploreBtn = document.querySelector('.cta-btn.secondary');
+        const featuresGrid = document.getElementById('features');
+        if (exploreBtn && featuresGrid) {
+            exploreBtn.addEventListener('click', function(e) {
                 e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
+                featuresGrid.style.display = 'grid';
+                featuresGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
-        });
+        }
 
         // Intersection Observer for animations
         const observerOptions = {
@@ -1305,12 +1434,7 @@
             }, 100);
         });
 
-        // Keyboard navigation
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeMenu();
-            }
-        });
+
 
         // Add ripple effect to buttons
         document.querySelectorAll('.cta-btn').forEach(button => {
@@ -1377,4 +1501,4 @@
         document.head.appendChild(style);
     </script>
 </body>
-</html>  
+</html>
