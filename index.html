@@ -634,9 +634,117 @@
             .top-nav-actions { gap: 8px; }
         }
         @media (max-width: 600px) {
-            .top-nav-content { flex-direction: column; gap: 6px; padding: 8px 2vw; }
-            .top-nav-links { flex-wrap: wrap; gap: 8px; justify-content: center; }
-            .top-nav-btn { padding: 6px 12px; font-size: 0.93rem; }
+            .top-nav-content {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                padding: 8px 2vw;
+                gap: 0;
+            }
+            .top-nav-menu-btn {
+                display: flex !important;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                width: 40px;
+                height: 40px;
+                background: rgba(0,0,0,0.08);
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                margin-left: auto;
+                z-index: 2100;
+                transition: background 0.2s;
+            }
+            .top-nav-menu-btn:focus {
+                outline: 2px solid #00d4aa;
+            }
+            .menu-bar {
+                display: block;
+                width: 24px;
+                height: 3px;
+                background: #00d4aa;
+                margin: 3px 0;
+                border-radius: 2px;
+                transition: all 0.3s;
+            }
+            .top-nav-links {
+                position: fixed;
+                top: 56px;
+                left: 0;
+                width: 100vw;
+                background: rgba(20, 20, 30, 0.97);
+                box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+                flex-direction: column;
+                gap: 0;
+                align-items: stretch;
+                margin-top: 0;
+                padding: 0;
+                z-index: 2001;
+                transform: translateY(-120%);
+                opacity: 0;
+                pointer-events: none;
+                transition: transform 0.35s cubic-bezier(.77,0,.18,1), opacity 0.25s;
+            }
+            .top-nav-links.open {
+                transform: translateY(0);
+                opacity: 1;
+                pointer-events: auto;
+            }
+            .top-nav-link {
+                font-size: 1.08rem;
+                padding: 16px 0;
+                border-radius: 0;
+                text-align: center;
+                width: 100%;
+                background: none;
+                margin: 0 auto;
+                border-bottom: 1px solid rgba(0,212,170,0.08);
+                transition: background 0.2s, color 0.2s;
+            }
+            .top-nav-link:last-child {
+                border-bottom: none;
+            }
+            .top-nav-link:hover {
+                background: rgba(0,212,170,0.10);
+                color: #00d4aa;
+            }
+            .top-nav-logo-img {
+                width: 32px;
+                height: 32px;
+            }
+            .top-nav-brand {
+                font-size: 1.1rem;
+            }
+            .top-navbar {
+                padding: 0 0;
+            }
+            .top-nav-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(0,0,0,0.25);
+                z-index: 2000;
+                opacity: 0;
+                transition: opacity 0.25s;
+            }
+            .top-nav-overlay.open {
+                display: block;
+                opacity: 1;
+            }
+            .cta-buttons {
+                flex-direction: column;
+                gap: 12px;
+            }
+            .cta-btn {
+                width: 100%;
+                font-size: 1rem;
+                padding: 12px 0;
+                border-radius: 12px;
+            }
         }
 
         /* Main Content */
@@ -999,14 +1107,20 @@
                 <img src="ảnh/Logo2.jpg" alt="Logo" class="top-nav-logo-img">
                 <span class="top-nav-brand">TechFuture</span>
             </a>
+            <button class="top-nav-menu-btn" aria-label="Mở menu" tabindex="0" style="display:none">
+                <span class="menu-bar"></span>
+                <span class="menu-bar"></span>
+                <span class="menu-bar"></span>
+            </button>
             <div class="top-nav-links">
-            <a href="agent cv .html" class="top-nav-link gradient-text">AI CV Analyzer</a>
-            <a href="holland+chatbot.html" class="top-nav-link gradient-text">Holland Chatbot</a>
-            <a href="phòng phỏng vấn ảo..html" class="top-nav-link gradient-text">Phỏng vấn ảo</a>
-            <a href="lọc cv.html" class="top-nav-link gradient-text">Lọc CV</a>
-            <a href="tạo cv.html" class="top-nav-link gradient-text">Tạo CV</a>
+                <a href="agent cv.html" class="top-nav-link gradient-text">AI CV Analyzer</a>
+                <a href="holland+chatbot.html" class="top-nav-link gradient-text">Holland Chatbot</a>
+                <a href="phòng phỏng vấn ảo..html" class="top-nav-link gradient-text">Phỏng vấn ảo</a>
+                <a href="lọc cv.html" class="top-nav-link gradient-text">Lọc CV</a>
+                <a href="tạo cv.html" class="top-nav-link gradient-text">Tạo CV</a>
             </div>
         </div>
+        <div class="top-nav-overlay"></div>
     </nav>
 
     <!-- Animated Background -->
@@ -1136,7 +1250,7 @@
                     top: ${y}px;
                     background: rgba(255, 255, 255, 0.3);
                     border-radius: 50%;
-                    transform: scale(0);
+                    transform: scale(0);    
                     animation: authRipple 0.6s linear;
                     pointer-events: none;
                 `;
@@ -1433,6 +1547,50 @@
             }
         `;
         document.head.appendChild(style);
+
+        // Hamburger menu for mobile
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuBtn = document.querySelector('.top-nav-menu-btn');
+            const navLinks = document.querySelector('.top-nav-links');
+            const navOverlay = document.querySelector('.top-nav-overlay');
+            function closeMenu() {
+                navLinks.classList.remove('open');
+                navOverlay.classList.remove('open');
+                menuBtn.setAttribute('aria-label', 'Mở menu');
+            }
+            function openMenu() {
+                navLinks.classList.add('open');
+                navOverlay.classList.add('open');
+                menuBtn.setAttribute('aria-label', 'Đóng menu');
+            }
+            if (menuBtn && navLinks && navOverlay) {
+                // Hiện nút menu trên mobile
+                function checkMobileMenu() {
+                    if (window.innerWidth <= 600) {
+                        menuBtn.style.display = 'flex';
+                        closeMenu();
+                    } else {
+                        menuBtn.style.display = 'none';
+                        navLinks.classList.remove('open');
+                        navOverlay.classList.remove('open');
+                    }
+                }
+                checkMobileMenu();
+                window.addEventListener('resize', checkMobileMenu);
+                menuBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (navLinks.classList.contains('open')) {
+                        closeMenu();
+                    } else {
+                        openMenu();
+                    }
+                });
+                navOverlay.addEventListener('click', closeMenu);
+                navLinks.querySelectorAll('.top-nav-link').forEach(link => {
+                    link.addEventListener('click', closeMenu);
+                });
+            }
+        });
     </script>
 </body>
-</html>
+</html> 
